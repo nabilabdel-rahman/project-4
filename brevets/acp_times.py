@@ -13,6 +13,8 @@ import arrow
 #  same arguments.
 #
 
+MAX_SPEEDS = [34, 32, 30, 28, 28, 26]
+MIN_SPEEDS = [15, 15, 15, 11.428, 11.428, 13.333]
 
 def open_time(control_dist_km, brevet_dist_km, brevet_start_time):
     """
@@ -26,7 +28,22 @@ def open_time(control_dist_km, brevet_dist_km, brevet_start_time):
        An arrow object indicating the control open time.
        This will be in the same time zone as the brevet start time.
     """
-    return arrow.now()
+    i = 0
+    time = 0
+   
+    if control_dist_km > brevet_dist_km:
+       control_dist_km = brevet_dist_km
+
+    while control_dist_km > 200:
+        time += (200/MAX_SPEEDS[i])
+        i += 1
+        control_dist_km -= 200
+
+    time += (control_dist_km/MAX_SPEEDS[i])        
+    time = ((time * 60) + 0.5)
+    int(time)
+    finalTime = arrow.get(brevet_start_time).shift(minutes=time)
+    return finalTime
 
 
 def close_time(control_dist_km, brevet_dist_km, brevet_start_time):
@@ -41,4 +58,33 @@ def close_time(control_dist_km, brevet_dist_km, brevet_start_time):
        An arrow object indicating the control close time.
        This will be in the same time zone as the brevet start time.
     """
-    return arrow.now()
+    i = 0
+    time = 0
+    additionalTime = 0.5
+
+    if (brevet_dist_km == 200 and control_dist_km >= 200):
+       additionalTime += 10
+
+    if (brevet_dist_km == 400 and control_dist_km >= 400):
+       additionalTime += 20
+    
+    if control_dist_km > brevet_dist_km:
+       control_dist_km = brevet_dist_km
+
+    #if control_dist_km == 0:
+      #return arrow.get(brevet_start_time).shift(hours=1)
+    if control_dist_km <= 60:
+       time = 60 + (3 * control_dist_km)
+       finalTime = arrow.get(brevet_start_time).shift(minutes=time)
+       return finalTime
+    else:
+      while control_dist_km > 200:
+        time += (200/MIN_SPEEDS[i])
+        i += 1
+        control_dist_km -= 200
+
+    time += (control_dist_km/MIN_SPEEDS[i])        
+    time = ((time * 60) + additionalTime)
+    int(time)
+    finalTime = arrow.get(brevet_start_time).shift(minutes=time)
+    return finalTime
